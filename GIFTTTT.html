@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>For You, Smahane ❤️</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#2a0f1f; --bg2:#3a1330; --bg3:#120811; --ink:#fff7fb;
+      --panel:#ffffff12; --accent:#ff5c92; --accent2:#ff2e63; --muted:#ffd7e7;
+    }
+    /* Base */
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter;
+      background:radial-gradient(1200px 600px at 70% -10%, var(--bg2) 0%, var(--bg1) 50%, var(--bg3) 100%);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased
+    }
+    .app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh}
+    nav{background:#210b18c0;backdrop-filter:blur(10px);padding:12px;position:sticky;top:0;z-index:5}
+    nav a{margin:0 8px;color:white;text-decoration:none}
+    .container{padding:24px;max-width:1000px;margin:auto}
+    .card{background:var(--panel);border-radius:24px;padding:24px;margin:20px 0;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+    h1,h2{font-family:'Dancing+Script',cursive}
+    .page{display:none;opacity:0;transform:translateY(6px);transition:opacity .28s ease, transform .28s ease}
+    .page.active{display:block;opacity:1;transform:none}
+
+    .btn{background:linear-gradient(180deg,var(--accent),#e53b74);color:white;padding:12px 18px;border:none;border-radius:16px;text-decoration:none;cursor:pointer;font-weight:700}
+    .next-wrap{display:flex;justify-content:center;margin-top:18px}
+    .next{position:relative;display:inline-flex;align-items:center;gap:10px;border:none;border-radius:999px;padding:12px 18px;background:linear-gradient(90deg,#ff2e63,#ff6f9e);color:#fff;font-weight:800;cursor:pointer;overflow:hidden}
+    .next .arrow{font-size:18px}
+    .trail{position:fixed;pointer-events:none;left:0;top:0;mix-blend-mode:screen}
+
+    /* --------- CAKE (with hint + overlay) --------- */
+    .cake-hint{
+      color:var(--muted);
+      margin:6px auto 10px;
+      font-weight:600;
+      animation:hintPulse 1.8s ease-in-out infinite
+    }
+    @keyframes hintPulse{0%,100%{opacity:.8}50%{opacity:1}}
+    .cake-wrapper{position:relative;display:inline-block}
+    .cake-img{
+      display:block;margin:0 auto;
+      width:min(520px, 100%);
+      height:auto;
+      border-radius:20px;
+      cursor:pointer;
+      box-shadow:0 10px 20px rgba(0,0,0,.4);
+      image-orientation: from-image;
+    }
+    #hiddenWords{
+      position:absolute; inset:0; display:flex; flex-direction:column;
+      justify-content:center; align-items:center; font-size:28px; font-weight:800;
+      text-align:center; color:#fff; text-shadow:0 0 12px rgba(0,0,0,.7),0 0 24px #ff2e63;
+      padding:12px; opacity:0; visibility:hidden; pointer-events:none;
+      transition:opacity .28s ease, visibility .28s ease;
+    }
+    #hiddenWords.show{opacity:1; visibility:visible;}
+
+    /* Countdown overlay */
+    #cakeCountdown{
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.35); color:#fff; font-size:68px; font-weight:900;
+      text-shadow:0 6px 24px rgba(0,0,0,.6); border-radius:20px; pointer-events:none;
+    }
+    #cakeCountdown.show{ display:flex; }
+    .count-pop{ animation:pop .8s ease forwards; }
+    @keyframes pop{ 0%{transform:scale(.6);opacity:.2}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1} }
+
+    /* --------- GALLERY: Masonry (default), no crop --------- */
+    .gallery{ column-count: 4; column-gap:12px; }
+    @media (max-width:900px){ .gallery{ column-count: 3; column-gap:10px; } }
+    @media (max-width:640px){ .gallery{ column-count: 2; column-gap:8px; } }
+    @media (max-width:380px){ .gallery{ column-count: 2; column-gap:8px; } }
+
+    .ph{ break-inside: avoid; display:block; margin:0 0 12px;
+      border-radius:14px; background:linear-gradient(135deg,#ffffff18,#ffffff0d);
+      border:1px dashed #ffffff30; overflow:hidden; }
+    .ph img{
+      width:100%; height:auto; display:block; opacity:0; transition:opacity .35s ease; image-orientation: from-image;
+    }
+    .ph img.loaded{ opacity:1; }
+
+    /* --------- Toggle: Square Grid (uniform tiles) --------- */
+    .gallery.square{
+      column-count: initial;
+      display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:12px;
+    }
+    .gallery.square .ph{ margin:0; aspect-ratio:1/1; }
+    .gallery.square .ph img{ width:100%; height:100%; object-fit:cover; }
+    @media (max-width:640px){ .gallery.square{ grid-template-columns: repeat(2, 1fr); gap:8px; } }
+
+    /* Lightbox */
+    .lightbox-backdrop{
+      position: fixed; inset: 0; background: rgba(0,0,0,.75);
+      display: none; align-items: center; justify-content: center;
+      z-index: 9999; backdrop-filter: blur(2px);
+    }
+    .lightbox-backdrop.active{ display:flex; }
+    .lightbox-img{
+      max-width: 96vw; max-height: 90vh; border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6); touch-action: pinch-zoom;
+    }
+    .lightbox-close{
+      position: absolute; top: 12px; right: 12px;
+      background: #ffffff22; border: 1px solid #ffffff55; color: #fff;
+      border-radius: 999px; padding: 8px 12px; font-weight: 700; cursor: pointer;
+    }
+
+    /* --------- Slideshow overlay (Memories) --------- */
+    .slideshow{
+      position:fixed; inset:0; background:rgba(0,0,0,.9);
+      display:none; align-items:center; justify-content:center; z-index:9998;
+    }
+    .slideshow.active{ display:flex; }
+    .slide-frame{
+      position:relative; width:min(92vw, 1000px); height:min(70vh, 700px);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .slide-img{
+      position:absolute; max-width:100%; max-height:100%; border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.6);
+      opacity:0; transform:scale(.985); transition:opacity .8s ease, transform .8s ease;
+    }
+    .slide-img.show{ opacity:1; transform:scale(1); }
+
+    .slide-caption{
+      position:absolute; bottom:-56px; left:50%; transform:translateX(-50%);
+      color:#fff; opacity:.85; font-weight:600; text-align:center;
+    }
+    .slide-controls{
+      position:absolute; top:14px; left:14px; display:flex; gap:8px;
+    }
+    .slide-controls .sm{
+      background:#ffffff22; border:1px solid #ffffff55; color:#fff;
+      border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer;
+    }
+    .slide-end{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      text-align:center; padding:24px; color:#fff; font-size:22px; line-height:1.5;
+      opacity:0; transition:opacity .6s ease;
+    }
+    .slide-end.show{ opacity:1; }
+
+    /* Mobile polish */
+    @media (max-width:640px){
+      :root{--safe-bottom:env(safe-area-inset-bottom)}
+      body{font-size:17px;line-height:1.6}
+      .container{padding:16px}
+      .card{padding:18px;border-radius:20px}
+      nav{padding:10px}
+      nav a{margin:0 6px}
+      h1{font-size:34px}
+      h2{font-size:28px}
+      .btn{padding:14px 18px;border-radius:18px}
+      .next-wrap{position:sticky;bottom:calc(10px + var(--safe-bottom));padding-bottom:var(--safe-bottom)}
+      .next{box-shadow:0 10px 28px rgba(255,94,144,.35)}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <nav>
+      <!-- Order: Intro → Letter → Memories → Cake → Finale -->
+      <a href="#/intro">Intro</a>
+      <a href="#/letter">Letter</a>
+      <a href="#/memories">Memories</a>
+      <a href="#/cake">Cake</a>
+      <a href="#/finale">Finale</a>
+      <a href="#/secret">Secret</a>
+    </nav>
+
+    <main class="container">
+      <!-- INTRO -->
+      <section class="page" id="page-intro">
+        <div class="card" style="text-align:center">
+          <h1>Hi, my love 💖</h1>
+          <p>Smahane, I made this small place for us. Even with you in Dubai and me here, I want you to feel me beside you. Ready to walk through it with me?</p>
+          <div class="next-wrap"><button class="next" data-next="#/letter">Take my hand <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- LETTER -->
+      <section class="page" id="page-letter">
+        <div class="card">
+          <h2>My letter to you 💌</h2>
+          <p>My dearest Smahane,<br><br>
+          Happy 23rd birthday, my love. Even though Dubai feels far, my heart is always close to you. Every day without you reminds me how much I miss your voice, your laugh, and the way your eyes look at me.<br><br>
+          You are my safe place, my courage, and my EVERYTHING. Distance cannot stop my love — it only makes me more sure of how much I want you in my life. I am so proud of you, of the woman you are, and of the strength you carry. I hope you never forget that you are loved more deeply than words can say.<br><br>
+          On this birthday, I want you to feel me beside you, whispering how beautiful you are, how grateful I am for you, and how lucky I am to love you. One day, when we are together again, I’ll tell you all this in person. Until then, know that my heart beats with yours across every mile.<br><br>
+          Always yours,<br>Mouad</p>
+          <div class="next-wrap"><button class="next" data-next="#/memories">See our memories <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- MEMORIES -->
+      <section class="page" id="page-memories">
+        <div class="card" style="margin-bottom:16px">
+          <h2>Reasons I love you</h2>
+          <div id="reasons" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+          <button class="btn" id="shuffleReasons" style="margin-top:12px">Shuffle 💕</button>
+        </div>
+        <div class="card">
+          <h2>Little memory gallery</h2>
+
+          <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap">
+            <p style="color:var(--muted);margin:0">Replace any image src with your photos.</p>
+            <div style="display:flex;gap:8px">
+              <button class="btn" id="toggleLayout" style="background:#ffffff18;color:var(--muted)">Square Grid</button>
+              <button class="btn" id="playSlideshow">Play memories 🎵</button>
+            </div>
+          </div>
+
+          <div class="gallery" style="margin-top:10px">
+            <div class="ph"><img src="1.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="2.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="3.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="4.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="5.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="6.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="7.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="8.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="9.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="10.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="11.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="12.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="13.jpg" alt="" loading="lazy" decoding="async"></div>
+          </div>
+
+          <div class="next-wrap"><button class="next" data-next="#/cake">A sweet surprise <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- CAKE -->
+      <section class="page" id="page-cake">
+        <div class="card" style="text-align:center">
+          <h2>For you 🎂</h2>
+          <div class="cake-hint">Click the image to celebrate 🎉</div>
+
+          <div class="cake-wrapper" aria-hidden="false">
+            <img src="download.jpg" alt="Birthday Cake" class="cake-img" id="cakeImg"
+                 loading="lazy" decoding="async"
+                 role="button" aria-pressed="false" aria-label="Open birthday message">
+
+            <div id="cakeCountdown"><span id="cakeCountNum" class="count-pop">3</span></div>
+
+            <div id="hiddenWords" aria-hidden="true">
+              Happy Birthday, my love. 💕<br>I am with you—always.
+            </div>
+          </div>
+
+          <div class="next-wrap"><button class="next" data-next="#/finale">A last note… <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- FINALE -->
+      <section class="page" id="page-finale">
+        <div class="card" style="text-align:center">
+          <h1>I’m with you, wherever you are 🎁</h1>
+          <p style="max-width:720px;margin:10px auto;color:var(--muted)">
+            It’s simple, but it carries my whole heart. I can’t send you a big gift to hold in your hands,
+            so I gave you something I believe is even more precious—my time, my effort, and my love.
+            I built this little space only for you, piece by piece, hoping you can feel me closer with every
+            word and memory inside it. I hope you like this small gift, Smahane, because it comes from all of me. 💖
+          </p>
+          <div class="next-wrap">
+            <!-- Sends to Secret page -->
+            <a class="next" href="#/secret">A little secret <span class="arrow">↺</span></a>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECRET -->
+      <section class="page" id="page-secret">
+        <div class="card" style="text-align:center">
+          <h2>Secret message 🔐</h2>
+          <p style="color:var(--muted)">This page is locked. Enter the secret to open it.</p>
+          <div class="lock-wrap">
+            <input class="lock-input" id="secretInput" type="password" placeholder="Password (try: Smahane or 23)">
+            <button class="btn" id="secretUnlock">Unlock</button>
+          </div>
+          <div id="secretContent" style="display:none;margin-top:16px">
+            <p>My secret is simple: I choose you, every day. No distance can change that. 💫</p>
+            <p style="color:var(--muted)">If you found this, it means you know my heart.</p>
+          </div>
+          <!-- Back button is ALWAYS visible -->
+          <div class="next-wrap" style="margin-top:14px">
+            <a class="next" href="#/intro">Back to the beginning <span class="arrow">↺</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer style="text-align:center;padding:16px;opacity:.8">Made with ❤️ just for you.</footer>
+  </div>
+
+  <!-- Lightbox (gallery) -->
+  <div class="lightbox-backdrop" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">Close ✕</button>
+    <img class="lightbox-img" id="lightboxImg" alt="">
+  </div>
+
+  <!-- Slideshow overlay -->
+  <div class="slideshow" id="slideshow">
+    <div class="slide-controls">
+      <button class="sm" id="slideClose">Close ✕</button>
+      <button class="sm" id="slideMute">Mute</button>
+      <button class="sm" id="slideReplay" style="display:none">Replay</button>
+    </div>
+    <div class="slide-frame">
+      <img class="slide-img" id="slideCurrent" alt="Memory">
+      <div class="slide-end" id="slideEndMsg">
+        Our memories are the bridge between us.<br>
+        Every photo says the same thing: <strong>we belong together</strong>.
+      </div>
+    </div>
+    <div class="slide-caption" id="slideCaption"></div>
+  </div>
+
+  <audio id="memAudio" src="calm.mp3" preload="auto"></audio>
+
+  <script>
+    /* ---------- Router (single definition) ---------- */
+    const routes = {
+      "/intro":"page-intro","/letter":"page-letter","/memories":"page-memories",
+      "/cake":"page-cake","/finale":"page-finale","/secret":"page-secret"
+    };
+    function render(){
+      const hash=location.hash.replace('#','')||'/intro';
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      const el=document.getElementById(routes[hash]);
+      if(el){ el.classList.add('active'); }
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    window.addEventListener('hashchange',render);
+    if(!location.hash) location.hash='#/intro';
+    render();
+
+    /* ---------- Confetti (cake) ---------- */
+    function confettiBurst(x,y){
+      const canvas=document.createElement('canvas');
+      canvas.width=innerWidth;canvas.height=innerHeight;
+      canvas.style.cssText="position:fixed;top:0;left:0;pointer-events:none;z-index:9998";
+      document.body.appendChild(canvas);
+      const ctx=canvas.getContext('2d');
+      const colors=['#ff2e63','#ff6f9e','#ffd166','#06d6a0','#4cc9f0','#f72585','#b5179e','#ffbe0b'];
+      const pieces=[];
+      for(let i=0;i<250;i++){
+        const angle=Math.random()*2*Math.PI;
+        const speed=8+Math.random()*8;
+        pieces.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-8,size:6+Math.random()*10,color:colors[i%colors.length],alpha:1});
+      }
+      (function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p=>{
+          p.x+=p.vx;p.y+=p.vy;p.vy+=0.3;p.alpha-=0.006;
+          ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;
+          ctx.fillRect(p.x,p.y,p.size,p.size/2);
+        });
+        if(pieces.some(p=>p.alpha>0)) requestAnimationFrame(draw);
+        else document.body.removeChild(canvas);
+      })();
+    }
+
+    /* ---------- Lightbox (gallery) ---------- */
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightboxImg');
+    const lbClose = document.getElementById('lightboxClose');
+    function openLightbox(src, alt=''){ lbImg.src = src; lbImg.alt = alt || 'Photo'; lb.classList.add('active'); }
+    function closeLightbox(){ lb.classList.remove('active'); lbImg.src = ''; }
+    lbClose.addEventListener('click', closeLightbox);
+    lb.addEventListener('click', (e)=>{ if(e.target === lb) closeLightbox(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && lb.classList.contains('active')) closeLightbox(); });
+
+    /* ---------- Cake click: 3-2-1 countdown, then reveal + confetti x10 ---------- */
+    const cake = document.getElementById('cakeImg');
+    const hidden = document.getElementById('hiddenWords');
+    const cakeCountdown = document.getElementById('cakeCountdown');
+    const cakeCountNum = document.getElementById('cakeCountNum');
+
+    if (cake) {
+      cake.style.cursor = 'pointer';
+      cake.addEventListener('click', (e) => {
+        let n = 3;
+        cakeCountNum.textContent = n;
+        cakeCountNum.classList.remove('count-pop'); void cakeCountNum.offsetWidth; cakeCountNum.classList.add('count-pop');
+        cakeCountdown.classList.add('show');
+
+        const x = e.clientX || innerWidth/2;
+        const y = e.clientY || innerHeight/2;
+
+        const tick = () => {
+          n--;
+          if (n > 0) {
+            cakeCountNum.textContent = n;
+            cakeCountNum.classList.remove('count-pop'); void cakeCountNum.offsetWidth; cakeCountNum.classList.add('count-pop');
+            setTimeout(tick, 700);
+          } else {
+            cakeCountdown.classList.remove('show');
+            hidden.classList.add('show');
+            cake.setAttribute('aria-pressed','true');
+            hidden.setAttribute('aria-hidden','false');
+            for (let i = 0; i < 10; i++) setTimeout(() => confettiBurst(x, y), i * 120);
+          }
+        };
+        setTimeout(tick, 700);
+      });
+    }
+
+    /* ---------- Heart trail on Next (supports data-next or href) ---------- */
+    document.querySelectorAll('.next').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        // allow both <button data-next> and <a href>
+        const target = btn.getAttribute('data-next') || btn.getAttribute('href');
+        if (target && target.startsWith('#/')) {
+          e.preventDefault();
+        }
+        const cx = (e.clientX||window.innerWidth/2);
+        const cy = (e.clientY||window.innerHeight/2);
+        for(let i=0;i<14;i++){
+          const h=document.createElement('div');
+          h.className='trail';
+          h.textContent='❤';
+          h.style.position='fixed';
+          h.style.left=cx+'px';
+          h.style.top=cy+'px';
+          h.style.fontSize=(14+Math.random()*10)+'px';
+          h.style.transition='transform 800ms cubic-bezier(.2,.7,.2,1), opacity 800ms';
+          document.body.appendChild(h);
+          const angle=Math.random()*Math.PI*2; const dist=60+Math.random()*140;
+          requestAnimationFrame(()=>{ h.style.transform=`translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`; h.style.opacity='0'; });
+          setTimeout(()=>h.remove(),820);
+        }
+        if (target && target.startsWith('#/')) {
+          setTimeout(()=>{ location.hash = target; }, 300);
+        }
+      });
+    });
+
+    /* ---------- Reasons shuffle ---------- */
+    const reasonsData = [
+      "I love your beautiful eyes","I love the way your hair shines","I love how positive you always are",
+      "I love your smile that makes me smile","I love your laugh, it feels like music","I love how you make me feel safe",
+      "I love that you believe in me","I love the way you listen to me","I love the way you hold me in your heart",
+      "I love that you make every day brighter","I love the way you calm me when I worry","I love the way you look at me with love",
+      "I love how you never give up on us","I love that you make me feel strong","I love your gentle and kind heart",
+      "I love how you bring light into my life","I love the way you make distance feel smaller","I love how you always understand me",
+      "I love the way you inspire me to be better","I love you because life is sweeter with you"
+    ];
+    const reasonsEl=document.getElementById('reasons');
+    const shuffleBtn=document.getElementById('shuffleReasons');
+    function drawReasons(){
+      reasonsEl.innerHTML='';
+      const sample=[...reasonsData].sort(()=>Math.random()-.5).slice(0,4);
+      sample.forEach(txt=>{
+        const span=document.createElement('span');
+        span.className='btn';
+        span.style.background='#ffffff18';
+        span.style.color='var(--muted)';
+        span.textContent=txt;
+        reasonsEl.appendChild(span);
+      });
+    }
+    if(reasonsEl && shuffleBtn){ drawReasons(); shuffleBtn.addEventListener('click', drawReasons); }
+
+    /* ---------- Image fade-in + lightbox for gallery ---------- */
+    document.querySelectorAll('.gallery .ph img').forEach(img=>{
+      if (img.complete) img.classList.add('loaded');
+      else {
+        img.addEventListener('load', ()=> img.classList.add('loaded'), { once:true });
+        img.addEventListener('error', ()=> img.classList.add('loaded'), { once:true });
+      }
+      img.style.cursor='zoom-in';
+      img.addEventListener('click', ()=> openLightbox(img.src, img.alt || 'Memory'));
+    });
+
+    /* ---------- Layout toggle ---------- */
+    const galleryEl = document.querySelector('.gallery');
+    const toggleBtn = document.getElementById('toggleLayout');
+    if (galleryEl && toggleBtn){
+      toggleBtn.addEventListener('click', ()=>{
+        galleryEl.classList.toggle('square');
+        toggleBtn.textContent = galleryEl.classList.contains('square') ? 'Masonry' : 'Square Grid';
+      });
+    }
+
+    /* ---------- Slideshow (Memories) ---------- */
+    const playBtn = document.getElementById('playSlideshow');
+    const slideshow = document.getElementById('slideshow');
+    const slideImg = document.getElementById('slideCurrent');
+    const slideCaption = document.getElementById('slideCaption');
+    const slideEndMsg = document.getElementById('slideEndMsg');
+    const slideClose = document.getElementById('slideClose');
+    const slideMute = document.getElementById('slideMute');
+    const slideReplay = document.getElementById('slideReplay');
+    const memAudio = document.getElementById('memAudio');
+
+    let slideIndex = 0;
+    let slideTimer = null;
+    const displayMs = 3500;
+    const fadeMs = 800;
+
+    const slideSources = Array.from(document.querySelectorAll('.gallery .ph img'))
+      .map(img => ({ src: img.src, alt: img.alt || 'Memory' }));
+
+    function showSlide(i){
+      const {src, alt} = slideSources[i];
+      slideImg.classList.remove('show');
+      setTimeout(()=>{
+        slideImg.src = src; slideImg.alt = alt;
+        slideCaption.textContent = `Memory ${i+1} of ${slideSources.length}`;
+        requestAnimationFrame(()=> slideImg.classList.add('show'));
+      }, 20);
+    }
+
+    function runSlideshow(){
+      if (!slideSources.length) return;
+      slideEndMsg.classList.remove('show');
+      slideReplay.style.display = 'none';
+      slideIndex = 0;
+      showSlide(slideIndex);
+      clearInterval(slideTimer);
+      slideTimer = setInterval(()=>{
+        slideIndex++;
+        if (slideIndex < slideSources.length){
+          showSlide(slideIndex);
+        } else {
+          clearInterval(slideTimer);
+          slideImg.classList.remove('show');
+          setTimeout(()=> slideEndMsg.classList.add('show'), fadeMs);
+          slideReplay.style.display = 'inline-block';
+          if (!memAudio.muted) memAudio.pause();
+        }
+      }, displayMs);
+    }
+
+    function openSlideshow(){
+      slideshow.classList.add('active');
+      memAudio.currentTime = 0;
+      memAudio.volume = 0.6;
+      memAudio.muted = false;
+      memAudio.play().catch(()=>{});
+      runSlideshow();
+    }
+    function closeSlideshow(){
+      slideshow.classList.remove('active');
+      clearInterval(slideTimer);
+      slideTimer = null;
+      if (!memAudio.paused) memAudio.pause();
+    }
+
+    if (playBtn) playBtn.addEventListener('click', openSlideshow);
+    slideClose.addEventListener('click', closeSlideshow);
+    slideMute.addEventListener('click', ()=>{
+      memAudio.muted = !memAudio.muted;
+      slideMute.textContent = memAudio.muted ? 'Unmute' : 'Mute';
+      if (!memAudio.muted && memAudio.paused) memAudio.play().catch(()=>{});
+    });
+    slideReplay.addEventListener('click', runSlideshow);
+    slideshow.addEventListener('click', (e)=>{ if(e.target === slideshow) closeSlideshow(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && slideshow.classList.contains('active')) closeSlideshow(); });
+
+    /* ---------- Secret unlock ---------- */
+    const secretInput = document.getElementById('secretInput');
+    const secretUnlock = document.getElementById('secretUnlock');
+    const secretContent = document.getElementById('secretContent');
+
+    function tryUnlock(){
+      const v = (secretInput.value || '').trim().toLowerCase();
+      if (v === 'smahane' || v === '23') {
+        secretContent.style.display = 'block';
+        secretInput.value = '';
+      } else {
+        secretInput.classList.remove('shake'); void secretInput.offsetWidth; secretInput.classList.add('shake');
+      }
+    }
+    if (secretUnlock) secretUnlock.addEventListener('click', tryUnlock);
+    if (secretInput) secretInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>For You, Smahane ❤️</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#2a0f1f; --bg2:#3a1330; --bg3:#120811; --ink:#fff7fb;
+      --panel:#ffffff12; --accent:#ff5c92; --accent2:#ff2e63; --muted:#ffd7e7;
+    }
+    /* Base */
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter;
+      background:radial-gradient(1200px 600px at 70% -10%, var(--bg2) 0%, var(--bg1) 50%, var(--bg3) 100%);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased
+    }
+    .app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh}
+    nav{background:#210b18c0;backdrop-filter:blur(10px);padding:12px;position:sticky;top:0;z-index:5}
+    nav a{margin:0 8px;color:white;text-decoration:none}
+    .container{padding:24px;max-width:1000px;margin:auto}
+    .card{background:var(--panel);border-radius:24px;padding:24px;margin:20px 0;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+    h1,h2{font-family:'Dancing+Script',cursive}
+    .page{display:none;opacity:0;transform:translateY(6px);transition:opacity .28s ease, transform .28s ease}
+    .page.active{display:block;opacity:1;transform:none}
+
+    .btn{background:linear-gradient(180deg,var(--accent),#e53b74);color:white;padding:12px 18px;border:none;border-radius:16px;text-decoration:none;cursor:pointer;font-weight:700}
+    .next-wrap{display:flex;justify-content:center;margin-top:18px}
+    .next{position:relative;display:inline-flex;align-items:center;gap:10px;border:none;border-radius:999px;padding:12px 18px;background:linear-gradient(90deg,#ff2e63,#ff6f9e);color:#fff;font-weight:800;cursor:pointer;overflow:hidden}
+    .next .arrow{font-size:18px}
+    .trail{position:fixed;pointer-events:none;left:0;top:0;mix-blend-mode:screen}
+
+    /* --------- CAKE (with hint + overlay) --------- */
+    .cake-hint{
+      color:var(--muted);
+      margin:6px auto 10px;
+      font-weight:600;
+      animation:hintPulse 1.8s ease-in-out infinite
+    }
+    @keyframes hintPulse{0%,100%{opacity:.8}50%{opacity:1}}
+    .cake-wrapper{position:relative;display:inline-block}
+    .cake-img{
+      display:block;margin:0 auto;
+      width:min(520px, 100%);
+      height:auto;
+      border-radius:20px;
+      cursor:pointer;
+      box-shadow:0 10px 20px rgba(0,0,0,.4);
+      image-orientation: from-image;
+    }
+    #hiddenWords{
+      position:absolute; inset:0; display:flex; flex-direction:column;
+      justify-content:center; align-items:center; font-size:28px; font-weight:800;
+      text-align:center; color:#fff; text-shadow:0 0 12px rgba(0,0,0,.7),0 0 24px #ff2e63;
+      padding:12px; opacity:0; visibility:hidden; pointer-events:none;
+      transition:opacity .28s ease, visibility .28s ease;
+    }
+    #hiddenWords.show{opacity:1; visibility:visible;}
+
+    /* Countdown overlay */
+    #cakeCountdown{
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.35); color:#fff; font-size:68px; font-weight:900;
+      text-shadow:0 6px 24px rgba(0,0,0,.6); border-radius:20px; pointer-events:none;
+    }
+    #cakeCountdown.show{ display:flex; }
+    .count-pop{ animation:pop .8s ease forwards; }
+    @keyframes pop{ 0%{transform:scale(.6);opacity:.2}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1} }
+
+    /* --------- GALLERY: Masonry (default), no crop --------- */
+    .gallery{ column-count: 4; column-gap:12px; }
+    @media (max-width:900px){ .gallery{ column-count: 3; column-gap:10px; } }
+    @media (max-width:640px){ .gallery{ column-count: 2; column-gap:8px; } }
+    @media (max-width:380px){ .gallery{ column-count: 2; column-gap:8px; } }
+
+    .ph{ break-inside: avoid; display:block; margin:0 0 12px;
+      border-radius:14px; background:linear-gradient(135deg,#ffffff18,#ffffff0d);
+      border:1px dashed #ffffff30; overflow:hidden; }
+    .ph img{
+      width:100%; height:auto; display:block; opacity:0; transition:opacity .35s ease; image-orientation: from-image;
+    }
+    .ph img.loaded{ opacity:1; }
+
+    /* --------- Toggle: Square Grid (uniform tiles) --------- */
+    .gallery.square{
+      column-count: initial;
+      display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:12px;
+    }
+    .gallery.square .ph{ margin:0; aspect-ratio:1/1; }
+    .gallery.square .ph img{ width:100%; height:100%; object-fit:cover; }
+    @media (max-width:640px){ .gallery.square{ grid-template-columns: repeat(2, 1fr); gap:8px; } }
+
+    /* Lightbox */
+    .lightbox-backdrop{
+      position: fixed; inset: 0; background: rgba(0,0,0,.75);
+      display: none; align-items: center; justify-content: center;
+      z-index: 9999; backdrop-filter: blur(2px);
+    }
+    .lightbox-backdrop.active{ display:flex; }
+    .lightbox-img{
+      max-width: 96vw; max-height: 90vh; border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6); touch-action: pinch-zoom;
+    }
+    .lightbox-close{
+      position: absolute; top: 12px; right: 12px;
+      background: #ffffff22; border: 1px solid #ffffff55; color: #fff;
+      border-radius: 999px; padding: 8px 12px; font-weight: 700; cursor: pointer;
+    }
+
+    /* --------- Slideshow overlay (Memories) --------- */
+    .slideshow{
+      position:fixed; inset:0; background:rgba(0,0,0,.9);
+      display:none; align-items:center; justify-content:center; z-index:9998;
+    }
+    .slideshow.active{ display:flex; }
+    .slide-frame{
+      position:relative; width:min(92vw, 1000px); height:min(70vh, 700px);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .slide-img{
+      position:absolute; max-width:100%; max-height:100%; border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.6);
+      opacity:0; transform:scale(.985); transition:opacity .8s ease, transform .8s ease;
+    }
+    .slide-img.show{ opacity:1; transform:scale(1); }
+
+    .slide-caption{
+      position:absolute; bottom:-56px; left:50%; transform:translateX(-50%);
+      color:#fff; opacity:.85; font-weight:600; text-align:center;
+    }
+    .slide-controls{
+      position:absolute; top:14px; left:14px; display:flex; gap:8px;
+    }
+    .slide-controls .sm{
+      background:#ffffff22; border:1px solid #ffffff55; color:#fff;
+      border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer;
+    }
+    .slide-end{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      text-align:center; padding:24px; color:#fff; font-size:22px; line-height:1.5;
+      opacity:0; transition:opacity .6s ease;
+    }
+    .slide-end.show{ opacity:1; }
+
+    /* Mobile polish */
+    @media (max-width:640px){
+      :root{--safe-bottom:env(safe-area-inset-bottom)}
+      body{font-size:17px;line-height:1.6}
+      .container{padding:16px}
+      .card{padding:18px;border-radius:20px}
+      nav{padding:10px}
+      nav a{margin:0 6px}
+      h1{font-size:34px}
+      h2{font-size:28px}
+      .btn{padding:14px 18px;border-radius:18px}
+      .next-wrap{position:sticky;bottom:calc(10px + var(--safe-bottom));padding-bottom:var(--safe-bottom)}
+      .next{box-shadow:0 10px 28px rgba(255,94,144,.35)}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <nav>
+      <!-- Order: Intro → Letter → Memories → Cake → Finale -->
+      <a href="#/intro">Intro</a>
+      <a href="#/letter">Letter</a>
+      <a href="#/memories">Memories</a>
+      <a href="#/cake">Cake</a>
+      <a href="#/finale">Finale</a>
+      <a href="#/secret">Secret</a>
+    </nav>
+
+    <main class="container">
+      <!-- INTRO -->
+      <section class="page" id="page-intro">
+        <div class="card" style="text-align:center">
+          <h1>Hi, my love 💖</h1>
+          <p>Smahane, I made this small place for us. Even with you in Dubai and me here, I want you to feel me beside you. Ready to walk through it with me?</p>
+          <div class="next-wrap"><button class="next" data-next="#/letter">Take my hand <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- LETTER -->
+      <section class="page" id="page-letter">
+        <div class="card">
+          <h2>My letter to you 💌</h2>
+          <p>My dearest Smahane,<br><br>
+          Happy 23rd birthday, my love. Even though Dubai feels far, my heart is always close to you. Every day without you reminds me how much I miss your voice, your laugh, and the way your eyes look at me.<br><br>
+          You are my safe place, my courage, and my EVERYTHING. Distance cannot stop my love — it only makes me more sure of how much I want you in my life. I am so proud of you, of the woman you are, and of the strength you carry. I hope you never forget that you are loved more deeply than words can say.<br><br>
+          On this birthday, I want you to feel me beside you, whispering how beautiful you are, how grateful I am for you, and how lucky I am to love you. One day, when we are together again, I’ll tell you all this in person. Until then, know that my heart beats with yours across every mile.<br><br>
+          Always yours,<br>Mouad</p>
+          <div class="next-wrap"><button class="next" data-next="#/memories">See our memories <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- MEMORIES -->
+      <section class="page" id="page-memories">
+        <div class="card" style="margin-bottom:16px">
+          <h2>Reasons I love you</h2>
+          <div id="reasons" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+          <button class="btn" id="shuffleReasons" style="margin-top:12px">Shuffle 💕</button>
+        </div>
+        <div class="card">
+          <h2>Little memory gallery</h2>
+
+          <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap">
+            <p style="color:var(--muted);margin:0">Replace any image src with your photos.</p>
+            <div style="display:flex;gap:8px">
+              <button class="btn" id="toggleLayout" style="background:#ffffff18;color:var(--muted)">Square Grid</button>
+              <button class="btn" id="playSlideshow">Play memories 🎵</button>
+            </div>
+          </div>
+
+          <div class="gallery" style="margin-top:10px">
+            <div class="ph"><img src="1.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="2.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="3.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="4.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="5.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="6.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="7.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="8.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="9.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="10.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="11.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="12.jpg" alt="" loading="lazy" decoding="async"></div>
+            <div class="ph"><img src="13.jpg" alt="" loading="lazy" decoding="async"></div>
+          </div>
+
+          <div class="next-wrap"><button class="next" data-next="#/cake">A sweet surprise <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- CAKE -->
+      <section class="page" id="page-cake">
+        <div class="card" style="text-align:center">
+          <h2>For you 🎂</h2>
+          <div class="cake-hint">Click the image to celebrate 🎉</div>
+
+          <div class="cake-wrapper" aria-hidden="false">
+            <img src="download.jpg" alt="Birthday Cake" class="cake-img" id="cakeImg"
+                 loading="lazy" decoding="async"
+                 role="button" aria-pressed="false" aria-label="Open birthday message">
+
+            <div id="cakeCountdown"><span id="cakeCountNum" class="count-pop">3</span></div>
+
+            <div id="hiddenWords" aria-hidden="true">
+              Happy Birthday, my love. 💕<br>I am with you—always.
+            </div>
+          </div>
+
+          <div class="next-wrap"><button class="next" data-next="#/finale">A last note… <span class="arrow">→</span></button></div>
+        </div>
+      </section>
+
+      <!-- FINALE -->
+      <section class="page" id="page-finale">
+        <div class="card" style="text-align:center">
+          <h1>I’m with you, wherever you are 🎁</h1>
+          <p style="max-width:720px;margin:10px auto;color:var(--muted)">
+            It’s simple, but it carries my whole heart. I can’t send you a big gift to hold in your hands,
+            so I gave you something I believe is even more precious—my time, my effort, and my love.
+            I built this little space only for you, piece by piece, hoping you can feel me closer with every
+            word and memory inside it. I hope you like this small gift, Smahane, because it comes from all of me. 💖
+          </p>
+          <div class="next-wrap">
+            <!-- Sends to Secret page -->
+            <a class="next" href="#/secret">A little secret <span class="arrow">↺</span></a>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECRET -->
+      <section class="page" id="page-secret">
+        <div class="card" style="text-align:center">
+          <h2>Secret message 🔐</h2>
+          <p style="color:var(--muted)">This page is locked. Enter the secret to open it.</p>
+          <div class="lock-wrap">
+            <input class="lock-input" id="secretInput" type="password" placeholder="Password (try: Smahane or 23)">
+            <button class="btn" id="secretUnlock">Unlock</button>
+          </div>
+          <div id="secretContent" style="display:none;margin-top:16px">
+            <p>My secret is simple: I choose you, every day. No distance can change that. 💫</p>
+            <p style="color:var(--muted)">If you found this, it means you know my heart.</p>
+          </div>
+          <!-- Back button is ALWAYS visible -->
+          <div class="next-wrap" style="margin-top:14px">
+            <a class="next" href="#/intro">Back to the beginning <span class="arrow">↺</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer style="text-align:center;padding:16px;opacity:.8">Made with ❤️ just for you.</footer>
+  </div>
+
+  <!-- Lightbox (gallery) -->
+  <div class="lightbox-backdrop" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">Close ✕</button>
+    <img class="lightbox-img" id="lightboxImg" alt="">
+  </div>
+
+  <!-- Slideshow overlay -->
+  <div class="slideshow" id="slideshow">
+    <div class="slide-controls">
+      <button class="sm" id="slideClose">Close ✕</button>
+      <button class="sm" id="slideMute">Mute</button>
+      <button class="sm" id="slideReplay" style="display:none">Replay</button>
+    </div>
+    <div class="slide-frame">
+      <img class="slide-img" id="slideCurrent" alt="Memory">
+      <div class="slide-end" id="slideEndMsg">
+        Our memories are the bridge between us.<br>
+        Every photo says the same thing: <strong>we belong together</strong>.
+      </div>
+    </div>
+    <div class="slide-caption" id="slideCaption"></div>
+  </div>
+
+  <audio id="memAudio" src="calm.mp3" preload="auto"></audio>
+
+  <script>
+    /* ---------- Router (single definition) ---------- */
+    const routes = {
+      "/intro":"page-intro","/letter":"page-letter","/memories":"page-memories",
+      "/cake":"page-cake","/finale":"page-finale","/secret":"page-secret"
+    };
+    function render(){
+      const hash=location.hash.replace('#','')||'/intro';
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      const el=document.getElementById(routes[hash]);
+      if(el){ el.classList.add('active'); }
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    window.addEventListener('hashchange',render);
+    if(!location.hash) location.hash='#/intro';
+    render();
+
+    /* ---------- Confetti (cake) ---------- */
+    function confettiBurst(x,y){
+      const canvas=document.createElement('canvas');
+      canvas.width=innerWidth;canvas.height=innerHeight;
+      canvas.style.cssText="position:fixed;top:0;left:0;pointer-events:none;z-index:9998";
+      document.body.appendChild(canvas);
+      const ctx=canvas.getContext('2d');
+      const colors=['#ff2e63','#ff6f9e','#ffd166','#06d6a0','#4cc9f0','#f72585','#b5179e','#ffbe0b'];
+      const pieces=[];
+      for(let i=0;i<250;i++){
+        const angle=Math.random()*2*Math.PI;
+        const speed=8+Math.random()*8;
+        pieces.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-8,size:6+Math.random()*10,color:colors[i%colors.length],alpha:1});
+      }
+      (function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p=>{
+          p.x+=p.vx;p.y+=p.vy;p.vy+=0.3;p.alpha-=0.006;
+          ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;
+          ctx.fillRect(p.x,p.y,p.size,p.size/2);
+        });
+        if(pieces.some(p=>p.alpha>0)) requestAnimationFrame(draw);
+        else document.body.removeChild(canvas);
+      })();
+    }
+
+    /* ---------- Lightbox (gallery) ---------- */
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightboxImg');
+    const lbClose = document.getElementById('lightboxClose');
+    function openLightbox(src, alt=''){ lbImg.src = src; lbImg.alt = alt || 'Photo'; lb.classList.add('active'); }
+    function closeLightbox(){ lb.classList.remove('active'); lbImg.src = ''; }
+    lbClose.addEventListener('click', closeLightbox);
+    lb.addEventListener('click', (e)=>{ if(e.target === lb) closeLightbox(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && lb.classList.contains('active')) closeLightbox(); });
+
+    /* ---------- Cake click: 3-2-1 countdown, then reveal + confetti x10 ---------- */
+    const cake = document.getElementById('cakeImg');
+    const hidden = document.getElementById('hiddenWords');
+    const cakeCountdown = document.getElementById('cakeCountdown');
+    const cakeCountNum = document.getElementById('cakeCountNum');
+
+    if (cake) {
+      cake.style.cursor = 'pointer';
+      cake.addEventListener('click', (e) => {
+        let n = 3;
+        cakeCountNum.textContent = n;
+        cakeCountNum.classList.remove('count-pop'); void cakeCountNum.offsetWidth; cakeCountNum.classList.add('count-pop');
+        cakeCountdown.classList.add('show');
+
+        const x = e.clientX || innerWidth/2;
+        const y = e.clientY || innerHeight/2;
+
+        const tick = () => {
+          n--;
+          if (n > 0) {
+            cakeCountNum.textContent = n;
+            cakeCountNum.classList.remove('count-pop'); void cakeCountNum.offsetWidth; cakeCountNum.classList.add('count-pop');
+            setTimeout(tick, 700);
+          } else {
+            cakeCountdown.classList.remove('show');
+            hidden.classList.add('show');
+            cake.setAttribute('aria-pressed','true');
+            hidden.setAttribute('aria-hidden','false');
+            for (let i = 0; i < 10; i++) setTimeout(() => confettiBurst(x, y), i * 120);
+          }
+        };
+        setTimeout(tick, 700);
+      });
+    }
+
+    /* ---------- Heart trail on Next (supports data-next or href) ---------- */
+    document.querySelectorAll('.next').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        // allow both <button data-next> and <a href>
+        const target = btn.getAttribute('data-next') || btn.getAttribute('href');
+        if (target && target.startsWith('#/')) {
+          e.preventDefault();
+        }
+        const cx = (e.clientX||window.innerWidth/2);
+        const cy = (e.clientY||window.innerHeight/2);
+        for(let i=0;i<14;i++){
+          const h=document.createElement('div');
+          h.className='trail';
+          h.textContent='❤';
+          h.style.position='fixed';
+          h.style.left=cx+'px';
+          h.style.top=cy+'px';
+          h.style.fontSize=(14+Math.random()*10)+'px';
+          h.style.transition='transform 800ms cubic-bezier(.2,.7,.2,1), opacity 800ms';
+          document.body.appendChild(h);
+          const angle=Math.random()*Math.PI*2; const dist=60+Math.random()*140;
+          requestAnimationFrame(()=>{ h.style.transform=`translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`; h.style.opacity='0'; });
+          setTimeout(()=>h.remove(),820);
+        }
+        if (target && target.startsWith('#/')) {
+          setTimeout(()=>{ location.hash = target; }, 300);
+        }
+      });
+    });
+
+    /* ---------- Reasons shuffle ---------- */
+    const reasonsData = [
+      "I love your beautiful eyes","I love the way your hair shines","I love how positive you always are",
+      "I love your smile that makes me smile","I love your laugh, it feels like music","I love how you make me feel safe",
+      "I love that you believe in me","I love the way you listen to me","I love the way you hold me in your heart",
+      "I love that you make every day brighter","I love the way you calm me when I worry","I love the way you look at me with love",
+      "I love how you never give up on us","I love that you make me feel strong","I love your gentle and kind heart",
+      "I love how you bring light into my life","I love the way you make distance feel smaller","I love how you always understand me",
+      "I love the way you inspire me to be better","I love you because life is sweeter with you"
+    ];
+    const reasonsEl=document.getElementById('reasons');
+    const shuffleBtn=document.getElementById('shuffleReasons');
+    function drawReasons(){
+      reasonsEl.innerHTML='';
+      const sample=[...reasonsData].sort(()=>Math.random()-.5).slice(0,4);
+      sample.forEach(txt=>{
+        const span=document.createElement('span');
+        span.className='btn';
+        span.style.background='#ffffff18';
+        span.style.color='var(--muted)';
+        span.textContent=txt;
+        reasonsEl.appendChild(span);
+      });
+    }
+    if(reasonsEl && shuffleBtn){ drawReasons(); shuffleBtn.addEventListener('click', drawReasons); }
+
+    /* ---------- Image fade-in + lightbox for gallery ---------- */
+    document.querySelectorAll('.gallery .ph img').forEach(img=>{
+      if (img.complete) img.classList.add('loaded');
+      else {
+        img.addEventListener('load', ()=> img.classList.add('loaded'), { once:true });
+        img.addEventListener('error', ()=> img.classList.add('loaded'), { once:true });
+      }
+      img.style.cursor='zoom-in';
+      img.addEventListener('click', ()=> openLightbox(img.src, img.alt || 'Memory'));
+    });
+
+    /* ---------- Layout toggle ---------- */
+    const galleryEl = document.querySelector('.gallery');
+    const toggleBtn = document.getElementById('toggleLayout');
+    if (galleryEl && toggleBtn){
+      toggleBtn.addEventListener('click', ()=>{
+        galleryEl.classList.toggle('square');
+        toggleBtn.textContent = galleryEl.classList.contains('square') ? 'Masonry' : 'Square Grid';
+      });
+    }
+
+    /* ---------- Slideshow (Memories) ---------- */
+    const playBtn = document.getElementById('playSlideshow');
+    const slideshow = document.getElementById('slideshow');
+    const slideImg = document.getElementById('slideCurrent');
+    const slideCaption = document.getElementById('slideCaption');
+    const slideEndMsg = document.getElementById('slideEndMsg');
+    const slideClose = document.getElementById('slideClose');
+    const slideMute = document.getElementById('slideMute');
+    const slideReplay = document.getElementById('slideReplay');
+    const memAudio = document.getElementById('memAudio');
+
+    let slideIndex = 0;
+    let slideTimer = null;
+    const displayMs = 3500;
+    const fadeMs = 800;
+
+    const slideSources = Array.from(document.querySelectorAll('.gallery .ph img'))
+      .map(img => ({ src: img.src, alt: img.alt || 'Memory' }));
+
+    function showSlide(i){
+      const {src, alt} = slideSources[i];
+      slideImg.classList.remove('show');
+      setTimeout(()=>{
+        slideImg.src = src; slideImg.alt = alt;
+        slideCaption.textContent = `Memory ${i+1} of ${slideSources.length}`;
+        requestAnimationFrame(()=> slideImg.classList.add('show'));
+      }, 20);
+    }
+
+    function runSlideshow(){
+      if (!slideSources.length) return;
+      slideEndMsg.classList.remove('show');
+      slideReplay.style.display = 'none';
+      slideIndex = 0;
+      showSlide(slideIndex);
+      clearInterval(slideTimer);
+      slideTimer = setInterval(()=>{
+        slideIndex++;
+        if (slideIndex < slideSources.length){
+          showSlide(slideIndex);
+        } else {
+          clearInterval(slideTimer);
+          slideImg.classList.remove('show');
+          setTimeout(()=> slideEndMsg.classList.add('show'), fadeMs);
+          slideReplay.style.display = 'inline-block';
+          if (!memAudio.muted) memAudio.pause();
+        }
+      }, displayMs);
+    }
+
+    function openSlideshow(){
+      slideshow.classList.add('active');
+      memAudio.currentTime = 0;
+      memAudio.volume = 0.6;
+      memAudio.muted = false;
+      memAudio.play().catch(()=>{});
+      runSlideshow();
+    }
+    function closeSlideshow(){
+      slideshow.classList.remove('active');
+      clearInterval(slideTimer);
+      slideTimer = null;
+      if (!memAudio.paused) memAudio.pause();
+    }
+
+    if (playBtn) playBtn.addEventListener('click', openSlideshow);
+    slideClose.addEventListener('click', closeSlideshow);
+    slideMute.addEventListener('click', ()=>{
+      memAudio.muted = !memAudio.muted;
+      slideMute.textContent = memAudio.muted ? 'Unmute' : 'Mute';
+      if (!memAudio.muted && memAudio.paused) memAudio.play().catch(()=>{});
+    });
+    slideReplay.addEventListener('click', runSlideshow);
+    slideshow.addEventListener('click', (e)=>{ if(e.target === slideshow) closeSlideshow(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && slideshow.classList.contains('active')) closeSlideshow(); });
+
+    /* ---------- Secret unlock ---------- */
+    const secretInput = document.getElementById('secretInput');
+    const secretUnlock = document.getElementById('secretUnlock');
+    const secretContent = document.getElementById('secretContent');
+
+    function tryUnlock(){
+      const v = (secretInput.value || '').trim().toLowerCase();
+      if (v === 'smahane' || v === '23') {
+        secretContent.style.display = 'block';
+        secretInput.value = '';
+      } else {
+        secretInput.classList.remove('shake'); void secretInput.offsetWidth; secretInput.classList.add('shake');
+      }
+    }
+    if (secretUnlock) secretUnlock.addEventListener('click', tryUnlock);
+    if (secretInput) secretInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  </script>
+</body>
+</html>
